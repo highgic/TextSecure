@@ -41,10 +41,10 @@
     <string name="ConversationItem_success_exclamation">Success!</string>
     <string name="ConversationItem_unable_to_write_to_sd_card_exclamation">Unable to write to SD Card!</string>
     <string name="ConversationItem_view_secure_media_question">View secure media?</string>
-    <string name="ConversationItem_this_media_has_been_stored_in_an_encrypted_database_external_viewer_warning">This media has been stored in an encrypted database. Unfortunately, to view it with an external content viewer currently requires the data to be temporarily decrypted and written to disk.  Are you sure that you would like to do this?</string>
+    <string name="ConversationItem_this_media_has_been_stored_in_an_encrypted_database_external_viewer_warning">This media has been stored in an encrypted database. Unfortunately, to view it with an external content viewer currently requires the data to be temporarily decrypted and written to disk. Are you sure that you would like to do this?</string>
     <string name="ConversationItem_received_and_processed_key_exchange_message">Received and processed key exchange message.</string>
     <string name="ConversationItem_error_received_stale_key_exchange_message">Error, received stale key exchange message.</string>
-    <string name="ConversationItem_received_key_exchange_message_click_to_process">Received key exchange message, click to process</string>
+    <string name="ConversationItem_received_key_exchange_message_click_to_process">Received key exchange message, click to process.</string>
     
     <!-- ConversationActivity -->
     <string name="ConversationActivity_initiate_secure_session_question">Initiate Secure Session?</string>
@@ -130,7 +130,7 @@
     <string name="ImportFragment_restore">Restore</string>
     <string name="ImportFragment_import_plaintext_backup">Import Plaintext Backup?</string>
     <string name="ImportFragment_this_will_import_messages_from_a_plaintext_backup">This will import
-        messages from a plaintext backup. If you\'ve previously imported the system\'s SMS database,
+        messages from a plaintext backup. If you\'ve previously imported this backup,
         importing again will result in duplicated messages.
     </string>
     <string name="ImportFragment_importing">Importing</string>
@@ -278,7 +278,10 @@
 
     <!-- SmsReceiver -->
     <string name="SmsReceiver_currently_unable_to_send_your_sms_message">Currently unable to send your SMS message. It will be sent once service becomes available.</string>
-    
+
+    <!-- QuickResponseService -->
+    <string name="QuickResponseService_sorry_quick_response_is_not_yet_supported_by_textsecure">Sorry, Quick Response is not yet supported by TextSecure!</string>
+
     <!-- auto_initiate_activity -->
     <string name="auto_initiate_activity__you_have_received_a_message_from_someone_who_supports_textsecure_encrypted_sessions_would_you_like_to_initiate_a_secure_session">You have received a message from someone who supports TextSecure encrypted sessions.  Would you like to initiate a secure session?</string>
     <string name="auto_initiate_activity__initiate_exchange">Initiate Exchange</string>
@@ -437,13 +440,10 @@
     <string name="preferences__manage_configured_identity_keys">Manage configured identity keys</string>
     <string name="preferences__notifications">Notifications</string>
     <string name="preferences__display_message_notifications_in_status_bar">Display message notifications in status bar</string>
-    <string name="preferences__led_color">LED Color</string>
-    <string name="preferences__change_notification_led_color">Change notification LED color</string>
-    <string name="preferences__pref_led_blink_title">LED Blink Pattern</string>
-    <string name="preferences__change_notification_blink_pattern">Change notification LED blink pattern</string>
-    <string name="preferences__pref_led_blink_dialogtitle">Select LED Blink Pattern</string>
-    <string name="preferences__select_led_color">Select LED Color</string>
+    <string name="preferences__led_color">LED color</string>
+    <string name="preferences__pref_led_blink_title">LED blink pattern</string>
     <string name="preferences__sound">Sound</string>
+    <string name="preferences__change_notification_sound">Change notification sound</string>
     <string name="preferences__inthread_notifications">In-thread notifications</string>
     <string name="preferences__play_inthread_notifications">Play notification sound when viewing an active conversation.</string>
     <string name="preferences__vibrate">Vibrate</string>
@@ -464,12 +464,12 @@
     <string name="preferences__passphrase">Passphrase</string>
     <string name="preferences__advanced_mms_access_point_names">MMS Preferences</string>
     <string name="preferences__enable_manual_mms">Enable Manual MMS</string>
-    <string name="preferences__override_system_mms_settings">Override system MMS settings with the below information.</string>
+    <string name="preferences__override_system_mms_settings">Override system MMS settings with the information below.</string>
     <string name="preferences__mmsc_url_required">MMSC URL (Required)</string>
     <string name="preferences__mms_proxy_host_optional">MMS Proxy Host (Optional)</string>
     <string name="preferences__mms_proxy_port_optional">MMS Proxy Port (Optional)</string>
-    <string name="preferences__request_a_delivery_report_for_each_sms_message_you_send">Request a delivery report for each SMS message you send</string>
     <string name="preferences__sms_delivery_reports">SMS delivery reports</string>
+    <string name="preferences__request_a_delivery_report_for_each_sms_message_you_send">Request a delivery report for each SMS message you send</string>
     <string name="preferences__automatically_delete_older_messages_once_a_conversation_thread_exceeds_a_specified_length">Automatically delete older messages once a conversation thread exceeds a specified length</string>
     <string name="preferences__delete_old_messages">Delete old messages</string>
     <string name="preferences__storage">Storage</string>
@@ -482,6 +482,8 @@
     <string name="preferences__theme">Theme</string>
     <string name="preferences__default">Default</string>
     <string name="preferences__language">Language</string>
+    <string name="preferences__make_default_sms_app">Set as default SMS app</string>
+    <string name="preferences__make_textsecure_the_default_sms_mms_app">Make TextSecure the default SMS/MMS application for your system.</string>
                                     
     <!-- **************************************** -->
     <!-- menus -->

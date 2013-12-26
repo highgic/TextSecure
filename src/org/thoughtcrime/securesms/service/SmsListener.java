@@ -21,6 +21,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.telephony.SmsMessage;
 import android.util.Log;
@@ -28,12 +29,14 @@ import android.util.Log;
 import org.thoughtcrime.securesms.ApplicationPreferencesActivity;
 import org.thoughtcrime.securesms.protocol.WirePrefix;
 import org.thoughtcrime.securesms.sms.IncomingTextMessage;
+import org.thoughtcrime.securesms.util.Util;
 
 import java.util.ArrayList;
 
 public class SmsListener extends BroadcastReceiver {
 
   private static final String SMS_RECEIVED_ACTION = "android.provider.Telephony.SMS_RECEIVED";
+  private static final String SMS_DELIVERED_ACTION = "android.provider.Telephony.SMS_DELIVER";
 
   private boolean isExemption(SmsMessage message, String messageBody) {
 
@@ -99,8 +102,19 @@ public class SmsListener extends BroadcastReceiver {
     if (!ApplicationMigrationService.isDatabaseImported(context))
       return false;
 
-    if (PreferenceManager.getDefaultSharedPreferences(context).getBoolean("pref_all_sms", true))
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT &&
+        SMS_RECEIVED_ACTION.equals(intent.getAction()) &&
+        Util.isDefaultSmsProvider(context))
+    {
+      return false;
+    }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT ||
+        PreferenceManager.getDefaultSharedPreferences(context)
+                         .getBoolean(ApplicationPreferencesActivity.ALL_SMS_PREF, true))
+    {
       return true;
+    }
 
     return WirePrefix.isEncryptedMessage(messageBody) || WirePrefix.isKeyExchange(messageBody);
   }
@@ -133,14 +147,17 @@ public class SmsListener extends BroadcastReceiver {
   public void onReceive(Context context, Intent intent) {
     Log.w("SMSListener", "Got SMS broadcast...");
 
-    if (intent.getAction().equals(SMS_RECEIVED_ACTION) && isChallenge(context, intent)) {
+    if (SMS_RECEIVED_ACTION.equals(intent.getAction()) && isChallenge(context, intent)) {
       Log.w("SmsListener", "Got challenge!");
       Intent challengeIntent = new Intent(RegistrationService.CHALLENGE_EVENT);
       challengeIntent.putExtra(RegistrationService.CHALLENGE_EXTRA, parseChallenge(context, intent));
       context.sendBroadcast(challengeIntent);
 
       abortBroadcast();
-    } else if (intent.getAction().equals(SMS_RECEIVED_ACTION) && isRelevant(context, intent)) {
+    } else if ((intent.getAction().equals(SMS_RECEIVED_ACTION) || 
+                intent.getAction().equals(SMS_DELIVERED_ACTION)) &&
+                isRelevant(context, intent))
+    {
       Intent receivedIntent = new Intent(context, SendReceiveService.class);
       receivedIntent.setAction(SendReceiveService.RECEIVE_SMS_ACTION);
       receivedIntent.putExtra("ResultCode", this.getResultCode());
@@ -148,14 +165,6 @@ public class SmsListener extends BroadcastReceiver {
       context.startService(receivedIntent);
 
       abortBroadcast();
-    } else if (intent.getAction().equals(SendReceiveService.SENT_SMS_ACTION)) {
-      intent.putExtra("ResultCode", this.getResultCode());
-      intent.setClass(context, SendReceiveService.class);
-      context.startService(intent);
-    } else if (intent.getAction().equals(SendReceiveService.DELIVERED_SMS_ACTION)) {
-      intent.putExtra("ResultCode", this.getResultCode());
-      intent.setClass(context, SendReceiveService.class);
-      context.startService(intent);
     }
   }
 }

@@ -21,14 +21,22 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
+import android.preference.ListPreference;
 import android.preference.Preference;
+import android.preference.PreferenceGroup;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
+import android.preference.RingtonePreference;
 import android.provider.ContactsContract;
+import android.provider.Telephony;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -42,6 +50,7 @@ import org.thoughtcrime.securesms.util.DynamicLanguage;
 import org.thoughtcrime.securesms.util.DynamicTheme;
 import org.thoughtcrime.securesms.util.MemoryCleaner;
 import org.thoughtcrime.securesms.util.Trimmer;
+import org.thoughtcrime.securesms.util.Util;
 
 /**
  * The Activity for application preference display and management.
@@ -65,7 +74,9 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredSherlockPr
   public static final String LED_BLINK_PREF                   = "pref_led_blink";
   public static final String LED_BLINK_PREF_CUSTOM            = "pref_led_blink_custom";
   public static final String IDENTITY_PREF                    = "pref_choose_identity";
+  public static final String ALL_SMS_PREF                     = "pref_all_sms";
   public static final String ALL_MMS_PERF                     = "pref_all_mms";
+  public static final String KITKAT_DEFAULT_PREF              = "pref_set_default";
   public static final String PASSPHRASE_TIMEOUT_INTERVAL_PREF = "pref_timeout_interval";
   public static final String PASSPHRASE_TIMEOUT_PREF          = "pref_timeout_passphrase";
   public static final String AUTO_KEY_EXCHANGE_PREF           = "pref_auto_complete_key_exchange";
@@ -110,6 +121,7 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredSherlockPr
     addPreferencesFromResource(R.xml.preferences);
 
     initializeIdentitySelection();
+    initializePlatformSpecificOptions();
 
     this.findPreference(CHANGE_PASSPHRASE_PREF)
       .setOnPreferenceClickListener(new ChangePassphraseClickListener());
@@ -121,6 +133,16 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredSherlockPr
       .setOnPreferenceChangeListener(new DisablePassphraseClickListener());
     this.findPreference(MMS_PREF)
       .setOnPreferenceClickListener(new ApnPreferencesClickListener());
+    this.findPreference(LED_COLOR_PREF)
+      .setOnPreferenceChangeListener(new ListSummaryListener());
+    this.findPreference(LED_BLINK_PREF)
+      .setOnPreferenceChangeListener(new ListSummaryListener());
+    this.findPreference(RINGTONE_PREF)
+      .setOnPreferenceChangeListener(new RingtoneSummaryListener());
+
+    initializeListSummary((ListPreference) findPreference(LED_COLOR_PREF));
+    initializeListSummary((ListPreference) findPreference(LED_BLINK_PREF));
+    initializeRingtoneSummary((RingtonePreference) findPreference(RINGTONE_PREF));
   }
 
   @Override
@@ -176,6 +198,27 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredSherlockPr
     return false;
   }
 
+  private void initializePlatformSpecificOptions() {
+    PreferenceGroup generalCategory = (PreferenceGroup)findPreference("general_category");
+    Preference defaultPreference = findPreference(KITKAT_DEFAULT_PREF);
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      generalCategory.removePreference(findPreference(ALL_SMS_PREF));
+      generalCategory.removePreference(findPreference(ALL_MMS_PERF));
+
+      if (Util.isDefaultSmsProvider(this)) {
+        generalCategory.removePreference(defaultPreference);
+      } else {
+        Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
+        intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getPackageName());
+
+        defaultPreference.setIntent(intent);
+      }
+    } else {
+      generalCategory.removePreference(defaultPreference);
+    }
+  }
+
   private void initializeIdentitySelection() {
     ContactIdentityManager identity = ContactIdentityManager.getInstance(this);
 
@@ -195,6 +238,18 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredSherlockPr
       this.findPreference(IDENTITY_PREF)
         .setOnPreferenceClickListener(new IdentityPreferenceClickListener());
     }
+  }
+
+  private void initializeListSummary(ListPreference pref) {
+    pref.setSummary(pref.getEntry());
+  }
+
+  private void initializeRingtoneSummary(RingtonePreference pref) {
+    RingtoneSummaryListener listener =
+      (RingtoneSummaryListener) pref.getOnPreferenceChangeListener();
+    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+    listener.onPreferenceChange(pref, sharedPreferences.getString(pref.getKey(), ""));
   }
 
   private void handleIdentitySelection(Intent data) {
@@ -348,6 +403,42 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredSherlockPr
     @Override
     public boolean onPreferenceClick(Preference preference) {
       startActivity(new Intent(ApplicationPreferencesActivity.this, MmsPreferencesActivity.class));
+      return true;
+    }
+  }
+
+  private class ListSummaryListener implements Preference.OnPreferenceChangeListener {
+    @Override
+    public boolean onPreferenceChange(Preference preference, Object value) {
+      ListPreference asList = (ListPreference) preference;
+
+      int index = 0;
+      for (; index < asList.getEntryValues().length; index++) {
+        if (value.equals(asList.getEntryValues()[index])) {
+          break;
+        }
+      }
+
+      asList.setSummary(asList.getEntries()[index]);
+      return true;
+    }
+  }
+
+  private class RingtoneSummaryListener implements Preference.OnPreferenceChangeListener {
+    @Override
+    public boolean onPreferenceChange(Preference preference, Object newValue) {
+      String value = (String) newValue;
+
+      if (TextUtils.isEmpty(value)) {
+        preference.setSummary(R.string.preferences__default);
+      } else {
+        Ringtone tone = RingtoneManager.getRingtone(ApplicationPreferencesActivity.this,
+          Uri.parse(value));
+        if (tone != null) {
+          preference.setSummary(tone.getTitle(ApplicationPreferencesActivity.this));
+        }
+      }
+
       return true;
     }
   }

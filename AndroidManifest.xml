@@ -2,10 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools"
           package="org.thoughtcrime.securesms"
-      android:versionCode="58"
-      android:versionName="1.0.2">
+      android:versionCode="62"
+      android:versionName="1.0.6">
 
-    <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="17"/>
+    <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="19"/>
 
     <permission android:name="org.thoughtcrime.securesms.ACCESS_SECRETS"
                 android:label="Access to TextSecure Secrets"
@@ -60,6 +60,8 @@
                   <category android:name="android.intent.category.DEFAULT" />
                   <data android:scheme="sms" />
                   <data android:scheme="smsto" />
+                  <data android:scheme="mms" />
+                  <data android:scheme="mmsto" />
             </intent-filter>
             
             <intent-filter>
@@ -170,6 +172,20 @@
     <service android:enabled="true" android:name=".service.RegistrationService"/>
     <service android:enabled="true" android:name=".gcm.GcmIntentService"/>
 
+    <service android:name=".service.QuickResponseService"
+             android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE"
+             android:exported="true" >
+        <intent-filter>
+            <action android:name="android.intent.action.RESPOND_VIA_MESSAGE" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:scheme="sms" />
+            <data android:scheme="smsto" />
+            <data android:scheme="mms" />
+            <data android:scheme="mmsto" />
+        </intent-filter>
+    </service>
+
+
 <!--	<receiver android:name=".service.BootListener" -->
 <!-- 			  android:enabled="true" -->
 <!-- 			  android:exported="false">-->
@@ -187,14 +203,22 @@
     </receiver>
 
     <receiver android:name=".service.SmsListener"
+              android:permission="android.permission.BROADCAST_SMS"
               android:enabled="true"
               android:exported="true">
              <intent-filter android:priority="1001">
                  <action android:name="android.provider.Telephony.SMS_RECEIVED"/>
              </intent-filter>
              <intent-filter>
-                 <action android:name="org.thoughtcrime.securesms.services.MESSAGE_SENT"/>
+                 <action android:name="android.provider.Telephony.SMS_DELIVER"/>
              </intent-filter>
+    </receiver>
+
+    <receiver android:name=".service.SmsDeliveryListener"
+              android:exported="true">
+        <intent-filter>
+            <action android:name="org.thoughtcrime.securesms.services.MESSAGE_SENT"/>
+        </intent-filter>
     </receiver>
 
     <receiver android:name=".service.MmsListener"
@@ -203,6 +227,10 @@
               android:permission="android.permission.BROADCAST_WAP_PUSH">
              <intent-filter android:priority="1001">
                  <action android:name="android.provider.Telephony.WAP_PUSH_RECEIVED"/>
+                 <data android:mimeType="application/vnd.wap.mms-message" />
+             </intent-filter>
+             <intent-filter>
+                 <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER"/>
                  <data android:mimeType="application/vnd.wap.mms-message" />
              </intent-filter>
     </receiver>
